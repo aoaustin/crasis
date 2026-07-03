@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.1] - 2026-07-03
+
+### Fixed
+- Synthetic data generation now uses a code-aware prompt scaffold when a spec's description/trigger/ignore describe source code (e.g. "C++ function body"), instead of the generic chat-message scaffold. The old scaffold asked for "tone: formal, casual, frustrated, polite" and "standalone message" text, producing prose-flavored negative examples for code specialists that never taught the model ordinary code (constructors, getters, boilerplate) is negative. Text-classification specs are unaffected.
+
+---
+
 ## [1.3.0] - 2026-03-12
 
 ### Changed
