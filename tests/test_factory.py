@@ -20,7 +20,6 @@ from crasis.factory import (
 )
 from crasis.spec import CrasisSpec, TaskType
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -76,7 +75,9 @@ def _binary_batch_json(n: int = 4) -> str:
 
 def _multiclass_batch_json(n: int = 4, classes=None) -> str:
     classes = classes or ["billing", "technical", "returns", "general"]
-    examples = [{"text": f"example {i}", "label": classes[i % len(classes)]} for i in range(n)]
+    examples = [
+        {"text": f"example {i}", "label": classes[i % len(classes)]} for i in range(n)
+    ]
     return json.dumps(examples)
 
 
@@ -108,7 +109,10 @@ def test_count_existing_empty_file(tmp_path):
 
 def test_count_existing_counts_lines(tmp_path):
     p = tmp_path / "train.jsonl"
-    lines = [json.dumps({"text": f"t{i}", "label": "positive", "label_id": 1}) for i in range(7)]
+    lines = [
+        json.dumps({"text": f"t{i}", "label": "positive", "label_id": 1})
+        for i in range(7)
+    ]
     p.write_text("\n".join(lines) + "\n", encoding="utf-8")
     assert _count_existing(p) == 7
 
@@ -119,7 +123,10 @@ def test_count_existing_missing_file(tmp_path):
 
 def test_count_existing_ignores_blank_lines(tmp_path):
     p = tmp_path / "train.jsonl"
-    p.write_text('{"text":"a","label":"positive","label_id":1}\n\n{"text":"b","label":"negative","label_id":0}\n', encoding="utf-8")
+    p.write_text(
+        '{"text":"a","label":"positive","label_id":1}\n\n{"text":"b","label":"negative","label_id":0}\n',
+        encoding="utf-8",
+    )
     assert _count_existing(p) == 2
 
 
@@ -161,31 +168,37 @@ def test_parse_wrong_json_type_returns_empty():
 
 
 def test_parse_filters_invalid_labels():
-    raw = json.dumps([
-        {"text": "valid", "label": "positive"},
-        {"text": "bad label", "label": "unknown"},
-        {"text": "empty label", "label": ""},
-    ])
+    raw = json.dumps(
+        [
+            {"text": "valid", "label": "positive"},
+            {"text": "bad label", "label": "unknown"},
+            {"text": "empty label", "label": ""},
+        ]
+    )
     results = _parse_batch_response(raw, BINARY_SPEC)
     assert len(results) == 1
     assert results[0]["label"] == "positive"
 
 
 def test_parse_filters_empty_text():
-    raw = json.dumps([
-        {"text": "", "label": "positive"},
-        {"text": "   ", "label": "negative"},
-        {"text": "good text", "label": "positive"},
-    ])
+    raw = json.dumps(
+        [
+            {"text": "", "label": "positive"},
+            {"text": "   ", "label": "negative"},
+            {"text": "good text", "label": "positive"},
+        ]
+    )
     results = _parse_batch_response(raw, BINARY_SPEC)
     assert len(results) == 1
 
 
 def test_parse_label_id_correct_for_binary():
-    raw = json.dumps([
-        {"text": "refund me", "label": "positive"},
-        {"text": "just browsing", "label": "negative"},
-    ])
+    raw = json.dumps(
+        [
+            {"text": "refund me", "label": "positive"},
+            {"text": "just browsing", "label": "negative"},
+        ]
+    )
     results = _parse_batch_response(raw, BINARY_SPEC)
     assert results[0]["label_id"] == BINARY_SPEC.label_names.index("positive")
     assert results[1]["label_id"] == BINARY_SPEC.label_names.index("negative")
@@ -207,7 +220,9 @@ def test_parse_multiclass_response():
 def test_generate_batch_sends_enforce_distillable_text():
     """enforce_distillable_text: True must be in every API call. Non-negotiable."""
     mock_client = MagicMock()
-    mock_client.chat.completions.create.return_value = _make_mock_response(_binary_batch_json(4))
+    mock_client.chat.completions.create.return_value = _make_mock_response(
+        _binary_batch_json(4)
+    )
 
     builder = _BinaryPromptBuilder(BINARY_SPEC)
     _generate_batch(mock_client, BINARY_SPEC, builder, 4)
@@ -222,7 +237,9 @@ def test_generate_batch_uses_openrouter_model():
     from crasis.spec import TaskType
 
     mock_client = MagicMock()
-    mock_client.chat.completions.create.return_value = _make_mock_response(_binary_batch_json(4))
+    mock_client.chat.completions.create.return_value = _make_mock_response(
+        _binary_batch_json(4)
+    )
 
     builder = _BinaryPromptBuilder(BINARY_SPEC)
     _generate_batch(mock_client, BINARY_SPEC, builder, 4)
@@ -462,12 +479,18 @@ def test_generate_no_resume_overwrites(tmp_path):
     out_dir.mkdir()
     out_path = out_dir / "train.jsonl"
     out_path.write_text(
-        "\n".join(json.dumps({"text": f"old{i}", "label": "positive", "label_id": 1}) for i in range(50)) + "\n",
+        "\n".join(
+            json.dumps({"text": f"old{i}", "label": "positive", "label_id": 1})
+            for i in range(50)
+        )
+        + "\n",
         encoding="utf-8",
     )
 
     with _patch_generate_batch(BINARY_SPEC, _binary_batch_json):
-        out = generate(BINARY_SPEC, tmp_path, api_key="fake-key", count=10, resume=False)
+        out = generate(
+            BINARY_SPEC, tmp_path, api_key="fake-key", count=10, resume=False
+        )
 
     lines = [l for l in out.read_text().splitlines() if l.strip()]
     assert len(lines) == 10
@@ -478,7 +501,11 @@ def test_generate_skips_when_already_complete(tmp_path):
     out_dir.mkdir()
     out_path = out_dir / "train.jsonl"
     out_path.write_text(
-        "\n".join(json.dumps({"text": f"t{i}", "label": "positive", "label_id": 1}) for i in range(100)) + "\n",
+        "\n".join(
+            json.dumps({"text": f"t{i}", "label": "positive", "label_id": 1})
+            for i in range(100)
+        )
+        + "\n",
         encoding="utf-8",
     )
 

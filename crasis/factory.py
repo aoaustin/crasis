@@ -45,9 +45,9 @@ logger = logging.getLogger(__name__)
 #   openai/gpt-4.1-nano                    404 — not actually distillable
 _GENERATOR_MODELS: dict[TaskType, str] = {
     TaskType.binary_classification: "deepseek/deepseek-chat-v3.1",
-    TaskType.multiclass:            "meta-llama/llama-3.3-70b-instruct",
-    TaskType.extraction:            "meta-llama/llama-3.3-70b-instruct",
-    TaskType.sequence:              "meta-llama/llama-3.3-70b-instruct",
+    TaskType.multiclass: "meta-llama/llama-3.3-70b-instruct",
+    TaskType.extraction: "meta-llama/llama-3.3-70b-instruct",
+    TaskType.sequence: "meta-llama/llama-3.3-70b-instruct",
 }
 
 # Examples requested per API call. Higher = fewer calls, larger responses.
@@ -299,18 +299,26 @@ class _PromptBuilder:
 # covered the real distribution of clean code (bare constructors, getters,
 # HAL setters). See crasis-ai/crasis issue: BMS specialist verification.
 _CODE_DOMAIN_MARKERS = (
-    "function body", "function bodies", "code review", "source code",
-    "class method", "member function",
+    "function body",
+    "function bodies",
+    "code review",
+    "source code",
+    "class method",
+    "member function",
 )
 
 _CODE_LANGUAGE_MARKERS: dict[str, str] = {
-    "c++": "C++", "cpp": "C++",
+    "c++": "C++",
+    "cpp": "C++",
     "python": "Python",
-    "javascript": "JavaScript", "typescript": "TypeScript",
+    "javascript": "JavaScript",
+    "typescript": "TypeScript",
     "java": "Java",
     "rust": "Rust",
     "go": "Go",
-    " c ": "C", "c99": "C", "c11": "C",
+    " c ": "C",
+    "c99": "C",
+    "c11": "C",
 }
 
 
@@ -340,7 +348,9 @@ class _BinaryPromptBuilder(_PromptBuilder):
             return self._build_code(spec, n, positive_n, negative_n)
         return self._build_text(spec, n, positive_n, negative_n)
 
-    def _build_text(self, spec: CrasisSpec, n: int, positive_n: int, negative_n: int) -> tuple[str, str]:
+    def _build_text(
+        self, spec: CrasisSpec, n: int, positive_n: int, negative_n: int
+    ) -> tuple[str, str]:
         system = (
             "You are a training data generator for a text classification specialist model. "
             "You produce realistic, diverse, labeled text examples in JSON format. "
@@ -349,7 +359,8 @@ class _BinaryPromptBuilder(_PromptBuilder):
 
         ignore_line = (
             f"\n- These are always NEGATIVE even if they superficially resemble positives: {spec.task.ignore}"
-            if spec.task.ignore else ""
+            if spec.task.ignore
+            else ""
         )
 
         user = f"""Generate {n} labeled text examples for a binary text classifier.
@@ -383,11 +394,17 @@ Generate exactly {n} examples now:"""
 
         return system, user
 
-    def _build_code(self, spec: CrasisSpec, n: int, positive_n: int, negative_n: int) -> tuple[str, str]:
+    def _build_code(
+        self, spec: CrasisSpec, n: int, positive_n: int, negative_n: int
+    ) -> tuple[str, str]:
         language = _detect_code_language(spec)
-        lang_line = f"All examples must be syntactically valid {language}." if language else (
-            "Infer the programming language from the specialist description below and "
-            "write syntactically valid code in that language."
+        lang_line = (
+            f"All examples must be syntactically valid {language}."
+            if language
+            else (
+                "Infer the programming language from the specialist description below and "
+                "write syntactically valid code in that language."
+            )
         )
 
         system = (
@@ -399,7 +416,8 @@ Generate exactly {n} examples now:"""
 
         ignore_line = (
             f"\n- These are always NEGATIVE even if they superficially resemble positives: {spec.task.ignore}"
-            if spec.task.ignore else ""
+            if spec.task.ignore
+            else ""
         )
 
         user = f"""Generate {n} labeled source-code examples for a binary code classifier.
@@ -462,7 +480,9 @@ class _MulticlassPromptBuilder(_PromptBuilder):
             return self._build_code(spec, n, class_block)
         return self._build_text(spec, n, class_block)
 
-    def _build_text(self, spec: CrasisSpec, n: int, class_block: str) -> tuple[str, str]:
+    def _build_text(
+        self, spec: CrasisSpec, n: int, class_block: str
+    ) -> tuple[str, str]:
         system = (
             "You are a training data generator for a text classification specialist model. "
             "Output valid JSON only — no explanation, no markdown."
@@ -489,11 +509,17 @@ Generate exactly {n} examples now:"""
 
         return system, user
 
-    def _build_code(self, spec: CrasisSpec, n: int, class_block: str) -> tuple[str, str]:
+    def _build_code(
+        self, spec: CrasisSpec, n: int, class_block: str
+    ) -> tuple[str, str]:
         language = _detect_code_language(spec)
-        lang_line = f"All examples must be syntactically valid {language}." if language else (
-            "Infer the programming language from the specialist description below and "
-            "write syntactically valid code in that language."
+        lang_line = (
+            f"All examples must be syntactically valid {language}."
+            if language
+            else (
+                "Infer the programming language from the specialist description below and "
+                "write syntactically valid code in that language."
+            )
         )
 
         system = (
